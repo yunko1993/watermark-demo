@@ -1,0 +1,30 @@
+WenQuanYi Zen Hei (文泉驿正黑)
+
+Font file: WenQuanZhengHei.ttf
+Embedded version: 0.8.38 (Pangu)
+Embedded copyright: Copyright (c) Qianqian Fang and WenQuanYi Board of Trustees
+Embedded license: GPL2 with font embedding exception
+Project: http://wenq.org/ ; https://sourceforge.net/projects/wqy/
+
+The font remains the work of its original authors. Its copyright and license
+are separate from the demo application and other dependencies.
+
+The GNU General Public License, version 2, is reproduced in COPYING.
+COPYING source:
+https://github.com/deepin-community/fonts-wqy-zenhei/blob/master/COPYING
+
+Font embedding exception:
+
+As a special exception, if you create a document which uses this font, and
+embed this font or unaltered portions of this font into the document, this
+font does not by itself cause the resulting document to be covered by the
+GNU General Public License. This exception does not however invalidate any
+other reasons why the document might be covered by the GNU General Public
+License. If you modify this font, you may extend this exception to your
+version of the font, but you are not obligated to do so. If you do not wish
+to do so, delete this exception statement from your version.
+
+Exception text reference:
+https://www.gnu.org/licenses/gpl-faq.html#FontException
+Font project distribution reference:
+https://github.com/deepin-community/fonts-wqy-zenhei

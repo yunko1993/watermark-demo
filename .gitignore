@@ -1,0 +1,16 @@
+/target/
+/.local/
+/.idea/
+*.iml
+/application-local.properties
+/.vscode/
+.env
+.env.*
+*.log
+*.pid
+*.pem
+*.key
+*.p12
+*.pfx
+Thumbs.db
+.DS_Store
