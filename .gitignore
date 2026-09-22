@@ -1,4 +1,5 @@
 /target/
+/lib/*.jar
 /.local/
 /.idea/
 *.iml

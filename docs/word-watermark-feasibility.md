@@ -9,8 +9,8 @@ Java 服务端可以在保持文件格式的前提下，给 DOCX、DOC 和已验
 | 格式 | 当前实现 | 验证状态 |
 | --- | --- | --- |
 | DOCX | Apache POI XWPF，页眉中的 VML 文字形状 | 已验证多节页眉继承、原有内容保留及本地 WPS 平铺显示 |
-| DOC | Free Spire.Doc，`FileFormat.Doc` 读写及 WordArt 形状 | 已验证真实 Word 97–2003 二进制样本 |
-| WPS | Free Spire.Doc，`FileFormat.Wps` 读写及 WordArt 形状 | 已验证 DOC 兼容容器样本；不能外推所有 WPS 历史格式 |
+| DOC | Aspose.Words / Free Spire.Doc 可选，页眉 WordArt 形状 | 已验证真实 Word 97–2003 二进制样本 |
+| WPS | Aspose.Words / Free Spire.Doc 可选，页眉 WordArt 形状 | 仅支持 DOC 兼容容器样本；不能外推所有 WPS 历史格式 |
 
 ## DOCX 实现
 
@@ -27,10 +27,10 @@ Java 服务端可以在保持文件格式的前提下，给 DOCX、DOC 和已验
 
 ## DOC / WPS 实现
 
-入口为 `LegacyWordWatermarkUtil.addTextWatermark`：
+入口为 `AsposeLegacyWordWatermarkUtil.addTextWatermark` 或 `LegacyWordWatermarkUtil.addTextWatermark`：
 
 1. Apache POI POIFS 校验 OLE2 容器及 `WordDocument` 数据流。
-2. Free Spire.Doc 使用 DOC 或 WPS 对应格式读入文件。
+2. 下载接口根据页面按钮选择 Aspose.Words 或 Free Spire.Doc 读入文件。
 3. 在页眉中追加 3 × 4 的 WordArt，置于正文后方，以实色 `#F0F0F0` 实现浅灰效果。
 4. 使用同一个格式枚举写出，保留原扩展名及编辑能力。
 
@@ -44,8 +44,8 @@ Spire 对部分非法输入可能较宽容，所以不能仅以 SDK 未抛出异
 | --- | --- | --- |
 | Apache POI XWPF | DOCX 结构编辑 | 用于 DOCX，不依赖客户端 Office |
 | Apache POI HWPF | 旧 DOC 的读取及有限写入 | 未用于 DOC 水印绘图；缺少直接适用的高层水印 API |
-| Free Spire.Doc | DOC/WPS 原格式读写、形状操作 | 用于当前样本 Demo，有免费版规模限制 |
-| Aspose.Words | 商业 Word 文档处理 | 备选，未集成 |
+| Free Spire.Doc | DOC/WPS 原格式读写、形状操作 | 已集成对比接口，有免费版规模限制 |
+| Aspose.Words | 商业 Word 文档处理 | 已集成 DOC 及 DOC 兼容型 WPS 对比接口 |
 | LibreOffice / Windows Office 自动化 | 转换或驱动办公软件 | 未集成；当前服务不依赖外部办公软件进程 |
 
 ## 交付前需验证的项目

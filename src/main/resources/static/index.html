@@ -14,12 +14,12 @@
         <h2>01 / 上传原件</h2><p>支持 PDF / DOCX / DOC / WPS，单个文件最大 20 MB。</p>
         <form id="uploadForm"><label class="file-picker" for="file">选择 PDF / Word<input id="file" type="file" accept=".pdf,.docx,.doc,.wps,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/wps-office.wps" required></label><button type="submit" id="upload">上传到 MinIO</button></form>
         <h2>02 / 预览与下载</h2><label for="objectName">MinIO 对象名</label><textarea id="objectName" rows="3" placeholder="上传后自动填写，也可以粘贴当前存储桶中已有的 PDF / Word 对象名"></textarea>
-        <div class="actions"><button data-action="watermark">预览水印版</button><button data-action="original" class="secondary">对比原件</button><button data-action="download" class="secondary">下载水印版</button></div>
-        <p class="note">PDF / DOCX / DOC / WPS：浅灰斜向平铺水印<br>Word 文件下载后用 Word / WPS 查看<br>日期按北京时间在请求时生成。</p>
+        <div class="actions"><button data-action="watermark">预览水印版</button><button data-action="original" class="secondary">对比原件</button><button data-action="download-aspose">Aspose 下载</button><button data-action="download-spire" class="secondary">Spire 下载</button></div>
+        <p class="note">DOC / WPS 可分别使用 Aspose 和 Spire 下载，方便比较大文档限制。<br>Word 文件下载后用 Word / WPS 查看；PDF / DOCX 继续使用原有处理组件。<br>日期按北京时间在请求时生成。</p>
         <p id="message" role="status" aria-live="polite">先上传一份 PDF 或 Word 文件，开始验证水印效果。</p>
       </section>
       <section class="panel preview"><div class="preview-title"><h2>文档预览</h2><span id="previewLabel">等待文件</span></div><p style="margin:12px 24px;font-size:12px">Word 文件请下载查看。PDF 预览需要浏览器内置 PDF 阅读器；若显示空白，请用 Chrome / Edge 打开本页，或下载查看。</p><div id="empty">上传文件后，点击「预览水印版」<small>原件不会被水印覆盖</small></div><iframe id="viewer" title="PDF 文档预览" hidden></iframe></section>
     </div><footer>PDF / Word 下载水印 Demo</footer>
-  </main><script src="/app.js"></script>
+  </main><script src="/app.js?v=20260922-engine-buttons"></script>
 </body>
 </html>

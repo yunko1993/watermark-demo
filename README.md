@@ -10,8 +10,8 @@
 | --- | --- | --- | --- | --- |
 | `.pdf` | `.pdf` | Apache PDFBox | 各页斜向平铺文字 | 支持，依赖浏览器 PDF 阅读器 |
 | `.docx` | `.docx` | Apache POI XWPF | 页眉浮动文字，3 列 × 4 行 | 下载后用 Word / WPS 查看 |
-| `.doc` | `.doc` | Free Spire.Doc | 页眉 WordArt，3 列 × 4 行 | 下载后用 Word / WPS 查看 |
-| `.wps` | `.wps` | Free Spire.Doc | 页眉 WordArt，3 列 × 4 行 | 下载后用 WPS 查看 |
+| `.doc` | `.doc` | Aspose.Words / Free Spire.Doc 可选 | 页眉 WordArt，3 列 × 4 行 | 下载后用 Word / WPS 查看 |
+| `.wps` | `.wps` | Aspose.Words / Free Spire.Doc 可选 | 页眉 WordArt，3 列 × 4 行 | 下载后用 WPS 查看 |
 
 - **保持输入格式**：下载流程不转换为 PDF，也不通过修改后缀伪装格式。
 - **保留 MinIO 原件**：只在下载时处理副本，不将水印结果覆盖回存储桶。
@@ -73,7 +73,7 @@ Windows 也可以运行 `powershell -ExecutionPolicy Bypass -File .\start.ps1`�
 打开 **[http://127.0.0.1:8088](http://127.0.0.1:8088)**：
 
 1. 选择 PDF / DOCX / DOC / WPS 原件，点击“上传到 MinIO”。首次上传会自动创建配置的存储桶。
-2. PDF 可以点击“预览水印版”；Word 文件点击“下载水印版”。
+2. PDF 可以点击“预览水印版”；DOC/WPS 分别点击“Aspose 下载”或“Spire 下载”进行对比。
 3. 用 Word / WPS 的打印布局打开下载文件，检查平铺水印与原文排版。
 4. 点击“对比原件”：PDF 在页面预览，Word 文件下载原件。
 
@@ -117,6 +117,8 @@ Free Spire.Doc 依赖来自 `pom.xml` 中的官方仓库：
 https://repo.e-iceblue.com/nexus/content/groups/public/
 ```
 
+Aspose 对比实现使用本地 `lib/aspose-words-24.01-jdk17-jie.jar`，该文件被 `.gitignore` 排除，不随仓库提交。部署或迁移项目前需要自行提供对应 JAR，并确认其来源和授权。
+
 如果本机 `settings.xml` 使用 `<mirrorOf>*</mirrorOf>`，可能导致该依赖被转发到没有收录它的镜像。可让镜像排除仓库 ID `e-iceblue`：
 
 ```xml
@@ -131,7 +133,8 @@ https://repo.e-iceblue.com/nexus/content/groups/public/
 | --- | --- | --- |
 | PDF | [`PdfWatermarkUtil`](src/main/java/com/example/watermark/util/PdfWatermarkUtil.java) | 深灰色，10% 不透明度，30pt，45° 平铺 |
 | DOCX | [`WordWatermarkUtil`](src/main/java/com/example/watermark/util/WordWatermarkUtil.java) | VML `#808080`，12% 不透明度，45°，3 × 4 |
-| DOC / WPS | [`LegacyWordWatermarkUtil`](src/main/java/com/example/watermark/util/LegacyWordWatermarkUtil.java) | 实色浅灰 `#F0F0F0`，45°，3 × 4 |
+| DOC / WPS（Aspose） | [`AsposeLegacyWordWatermarkUtil`](src/main/java/com/example/watermark/util/AsposeLegacyWordWatermarkUtil.java) | 实色浅灰 `#F0F0F0`，45°，3 × 4 |
+| DOC / WPS（Spire） | [`LegacyWordWatermarkUtil`](src/main/java/com/example/watermark/util/LegacyWordWatermarkUtil.java) | 实色浅灰 `#F0F0F0`，45°，3 × 4 |
 
 DOC/WPS 的颜色由 `WATERMARK_COLOR` 常量控制：
 
@@ -150,6 +153,8 @@ DOCX 使用相对页面的绝对坐标放置形状；同时设置 `center` 与 m
 | `GET` | `/api/status` | 当前日期水印、MinIO 连通状态及存储桶状态 |
 | `POST` | `/api/files` | multipart 字段 `file`，上传原件并返回 `objectName` |
 | `GET` | `/api/files/download?objectName=...` | 下载保持原格式的水印副本 |
+| `GET` | `/api/files/download/aspose?objectName=...` | DOC/WPS 使用 Aspose 添加水印 |
+| `GET` | `/api/files/download/spire?objectName=...` | DOC/WPS 使用 Free Spire.Doc 添加水印 |
 | `GET` | 同上加 `original=true` | 获取原件 |
 | `GET` | 同上加 `preview=true` | PDF 内联预览；Word 仍按附件下载 |
 
@@ -203,6 +208,7 @@ mvn test
 | Apache PDFBox | 2.0.30 | PDF 水印 |
 | Apache POI | 5.4.1 | DOCX 水印及 OLE2 校验 |
 | Free Spire.Doc | 14.3.1 | DOC/WPS 读写与 WordArt |
+| Aspose.Words | 24.1，本地 JAR | DOC/WPS 对比处理与 WordArt |
 | MinIO Java SDK | 8.2.2 | 原件存取 |
 
 **Free Spire.Doc 是受限免费、非开源组件**。官方说明免费版每个文档最多处理 **500 个段落、25 张表格**；超限或正式交付需要评估相应商业版本及授权。仓库不包含该 SDK 的 JAR，构建时通过官方 Maven 仓库获取。参见 [官方免费版说明](https://www.e-iceblue.com/Introduce/free-doc-for-java.html)。

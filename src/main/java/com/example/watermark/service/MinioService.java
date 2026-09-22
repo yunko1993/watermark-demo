@@ -1,5 +1,6 @@
 package com.example.watermark.service;
 
+import com.example.watermark.util.AsposeLegacyWordWatermarkUtil;
 import com.example.watermark.util.LegacyWordWatermarkUtil;
 import com.example.watermark.util.PdfWatermarkUtil;
 import com.example.watermark.util.WordWatermarkUtil;
@@ -22,6 +23,8 @@ import java.util.UUID;
 @Service
 public class MinioService {
     private static final long MAX_BYTES = 20L * 1024 * 1024;
+    private static final String LEGACY_ENGINE_ASPOSE = "aspose";
+    private static final String LEGACY_ENGINE_SPIRE = "spire";
     private final MinioClient client;
     private final String bucket;
 
@@ -53,7 +56,7 @@ public class MinioService {
             }
         } else if (isLegacyWord(name)) {
             try (InputStream in = file.getInputStream()) {
-                LegacyWordWatermarkUtil.validate(in, isWps(name));
+                AsposeLegacyWordWatermarkUtil.validate(in, isWps(name));
             }
         } else {
             try (InputStream in = file.getInputStream();
@@ -84,6 +87,18 @@ public class MinioService {
      * @return 保留原格式的文件内容，不回写 MinIO
      */
     public byte[] download(String objectName, boolean watermark) throws Exception {
+        return download(objectName, watermark, LEGACY_ENGINE_ASPOSE);
+    }
+
+    /**
+     * 读取 MinIO 原件，并为 DOC/WPS 选择指定的水印引擎，便于在同一份原件上比较处理结果。
+     *
+     * @param objectName 桶内对象名
+     * @param watermark 是否生成水印；false 时直接返回原件
+     * @param legacyEngine DOC/WPS 处理引擎，仅支持 aspose 或 spire；其他格式继续使用既有实现
+     * @return 保持原格式的文件内容，不回写 MinIO
+     */
+    public byte[] download(String objectName, boolean watermark, String legacyEngine) throws Exception {
         if (!isSupported(objectName)) {
             throw new IllegalArgumentException("请填写有效的 PDF 或 DOCX 对象名");
         }
@@ -109,13 +124,29 @@ public class MinioService {
                     return WordWatermarkUtil.addTextWatermark(original, watermarkText());
                 }
                 if (isLegacyWord(objectName)) {
-                    return LegacyWordWatermarkUtil.addTextWatermark(original, watermarkText(), isWps(objectName));
+                    // 对比口径：两个引擎读取同一份 MinIO 原件，生成结果均只返回给本次下载。
+                    return addLegacyWordWatermark(original, objectName, legacyEngine);
                 }
                 return PdfWatermarkUtil.addTextWatermark(original, watermarkText());
             } catch (IOException e) {
                 throw new IllegalArgumentException("文件无法处理，请检查是否损坏或加密", e);
             }
         }
+    }
+
+    private byte[] addLegacyWordWatermark(InputStream original, String objectName, String legacyEngine) {
+        String normalizedEngine = legacyEngine == null
+                ? LEGACY_ENGINE_ASPOSE
+                : legacyEngine.trim().toLowerCase(Locale.ROOT);
+        if (LEGACY_ENGINE_ASPOSE.equals(normalizedEngine)) {
+            return AsposeLegacyWordWatermarkUtil.addTextWatermark(
+                    original, watermarkText(), isWps(objectName));
+        }
+        if (LEGACY_ENGINE_SPIRE.equals(normalizedEngine)) {
+            return LegacyWordWatermarkUtil.addTextWatermark(
+                    original, watermarkText(), isWps(objectName));
+        }
+        throw new IllegalArgumentException("DOC/WPS 水印引擎仅支持 aspose 或 spire");
     }
 
     /** 检查 MinIO 是否可访问；不创建桶、不暴露凭据。 */

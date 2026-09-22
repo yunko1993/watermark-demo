@@ -41,15 +41,45 @@ public class FileController {
         return result;
     }
 
-    /** 下载水印副本或原件；仅 PDF 支持浏览器预览，Word 文件始终以附件返回。 */
+    /**
+     * 下载水印副本或原件；旧格式 Word 默认使用 Aspose，保留原接口兼容已有调用方。
+     *
+     * @param objectName MinIO 桶内对象名
+     * @param preview 是否以内联方式返回 PDF
+     * @param original 是否直接下载无水印原件
+     * @return 原件或处理后的文件内容，不会覆盖 MinIO 原件
+     */
     @GetMapping("/files/download")
     public ResponseEntity<byte[]> download(@RequestParam String objectName,
                                           @RequestParam(defaultValue = "false") boolean preview,
                                           @RequestParam(defaultValue = "false") boolean original) throws Exception {
-        byte[] body = service.download(objectName, !original);
+        return download(objectName, preview, original, "aspose", null);
+    }
+
+    /** 使用 Aspose 为 DOC/WPS 添加水印；PDF 和 DOCX 继续使用原有处理组件。 */
+    @GetMapping("/files/download/aspose")
+    public ResponseEntity<byte[]> downloadWithAspose(@RequestParam String objectName,
+                                                      @RequestParam(defaultValue = "false") boolean preview,
+                                                      @RequestParam(defaultValue = "false") boolean original) throws Exception {
+        return download(objectName, preview, original, "aspose", "Aspose");
+    }
+
+    /** 使用 Free Spire.Doc 为 DOC/WPS 添加水印，用于直观看到免费版规模限制。 */
+    @GetMapping("/files/download/spire")
+    public ResponseEntity<byte[]> downloadWithSpire(@RequestParam String objectName,
+                                                     @RequestParam(defaultValue = "false") boolean preview,
+                                                     @RequestParam(defaultValue = "false") boolean original) throws Exception {
+        return download(objectName, preview, original, "spire", "Spire");
+    }
+
+    private ResponseEntity<byte[]> download(String objectName, boolean preview, boolean original,
+                                            String legacyEngine, String engineLabel) throws Exception {
+        byte[] body = service.download(objectName, !original, legacyEngine);
         String name = objectName.substring(objectName.lastIndexOf('/') + 1)
                 .replaceAll("[\\p{Cntrl}\\\\]", "_");
-        if (!original) { name = "水印-" + name; }
+        if (!original) {
+            name = (engineLabel == null ? "水印" : engineLabel + "水印") + "-" + name;
+        }
         ContentDisposition disposition = (preview && !MinioService.isWord(objectName) ? ContentDisposition.inline() : ContentDisposition.attachment())
                 .filename(name, StandardCharsets.UTF_8).build();
         return ResponseEntity.ok().contentType(MediaType.parseMediaType(MinioService.contentType(objectName)))
