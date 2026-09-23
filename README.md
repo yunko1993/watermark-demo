@@ -73,7 +73,7 @@ Windows 也可以运行 `powershell -ExecutionPolicy Bypass -File .\start.ps1`�
 打开 **[http://127.0.0.1:8088](http://127.0.0.1:8088)**：
 
 1. 选择 PDF / DOCX / DOC / WPS 原件，点击“上传到 MinIO”。首次上传会自动创建配置的存储桶。
-2. PDF 可以点击“预览水印版”；DOC/WPS 分别点击“Aspose 下载”或“Spire 下载”进行对比。
+2. PDF 可以点击“预览水印版”或“下载水印版”；DOCX 点击“下载水印版”；DOC/WPS 分别点击“Aspose 下载”或“Spire 下载”进行对比。
 3. 用 Word / WPS 的打印布局打开下载文件，检查平铺水印与原文排版。
 4. 点击“对比原件”：PDF 在页面预览，Word 文件下载原件。
 

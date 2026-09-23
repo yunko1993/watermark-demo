@@ -63,7 +63,7 @@ document.querySelectorAll('[data-action]').forEach(button => button.addEventList
   const response = await checked(await fetch(`${endpoint}?${params}`));
   const blob = await response.blob();
   const url = URL.createObjectURL(blob);
-  if (engine || isWord) {
+  if (action === 'download' || engine || isWord) {
     const link = document.createElement('a');
     const prefix = action === 'original' ? '原件' : `${engineLabel || ''}水印`;
     link.href = url; link.download = `${prefix}-${objectName.split('/').pop()}`;
