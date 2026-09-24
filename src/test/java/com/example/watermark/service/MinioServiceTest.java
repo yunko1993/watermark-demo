@@ -16,7 +16,8 @@ class MinioServiceTest {
     @Test
     void downloadUsesCurrentDateWithoutWritingBackOriginal() throws Exception {
         MinioClient client = mock(MinioClient.class);
-        MinioService service = new MinioService(client, "watermark-demo");
+        MinioService service = new MinioService(client, "watermark-demo",
+                mock(LibreOfficeLegacyWordWatermarkService.class));
         byte[] source;
         try (PDDocument doc = new PDDocument(); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
             doc.addPage(new PDPage()); doc.save(out); source = out.toByteArray();
@@ -43,7 +44,8 @@ class MinioServiceTest {
     @Test
     void rejectsFakePdfBeforeContactingMinio() {
         MinioClient client = mock(MinioClient.class);
-        MinioService service = new MinioService(client, "watermark-demo");
+        MinioService service = new MinioService(client, "watermark-demo",
+                mock(LibreOfficeLegacyWordWatermarkService.class));
         assertThrows(IllegalArgumentException.class, () -> service.upload(
                 new MockMultipartFile("file", "fake.pdf", "application/pdf", new byte[]{1, 2, 3})));
         assertThrows(IllegalArgumentException.class, () -> service.upload(

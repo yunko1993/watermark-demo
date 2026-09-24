@@ -25,12 +25,16 @@ public class MinioService {
     private static final long MAX_BYTES = 20L * 1024 * 1024;
     private static final String LEGACY_ENGINE_ASPOSE = "aspose";
     private static final String LEGACY_ENGINE_SPIRE = "spire";
+    private static final String LEGACY_ENGINE_LIBREOFFICE = "libreoffice";
     private final MinioClient client;
     private final String bucket;
+    private final LibreOfficeLegacyWordWatermarkService libreOfficeWatermarkService;
 
-    public MinioService(MinioClient client, @Value("${minio.bucket}") String bucket) {
+    public MinioService(MinioClient client, @Value("${minio.bucket}") String bucket,
+                        LibreOfficeLegacyWordWatermarkService libreOfficeWatermarkService) {
         this.client = client;
         this.bucket = bucket;
+        this.libreOfficeWatermarkService = libreOfficeWatermarkService;
     }
 
     /** 获取中国时区的当天水印；每次下载重新生成，避免保存上传日期。 */
@@ -95,7 +99,7 @@ public class MinioService {
      *
      * @param objectName 桶内对象名
      * @param watermark 是否生成水印；false 时直接返回原件
-     * @param legacyEngine DOC/WPS 处理引擎，仅支持 aspose 或 spire；其他格式继续使用既有实现
+     * @param legacyEngine DOC/WPS 处理引擎，支持 aspose、spire 或 libreoffice
      * @return 保持原格式的文件内容，不回写 MinIO
      */
     public byte[] download(String objectName, boolean watermark, String legacyEngine) throws Exception {
@@ -134,7 +138,8 @@ public class MinioService {
         }
     }
 
-    private byte[] addLegacyWordWatermark(InputStream original, String objectName, String legacyEngine) {
+    private byte[] addLegacyWordWatermark(InputStream original, String objectName,
+                                          String legacyEngine) throws IOException {
         String normalizedEngine = legacyEngine == null
                 ? LEGACY_ENGINE_ASPOSE
                 : legacyEngine.trim().toLowerCase(Locale.ROOT);
@@ -146,7 +151,11 @@ public class MinioService {
             return LegacyWordWatermarkUtil.addTextWatermark(
                     original, watermarkText(), isWps(objectName));
         }
-        throw new IllegalArgumentException("DOC/WPS 水印引擎仅支持 aspose 或 spire");
+        if (LEGACY_ENGINE_LIBREOFFICE.equals(normalizedEngine)) {
+            return libreOfficeWatermarkService.addTextWatermark(
+                    original, watermarkText(), isWps(objectName));
+        }
+        throw new IllegalArgumentException("DOC/WPS 水印引擎仅支持 aspose、spire 或 libreoffice");
     }
 
     /** 检查 MinIO 是否可访问；不创建桶、不暴露凭据。 */

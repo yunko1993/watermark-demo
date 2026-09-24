@@ -10,8 +10,8 @@
 | --- | --- | --- | --- | --- |
 | `.pdf` | `.pdf` | Apache PDFBox | 各页斜向平铺文字 | 支持，依赖浏览器 PDF 阅读器 |
 | `.docx` | `.docx` | Apache POI XWPF | 页眉浮动文字，3 列 × 4 行 | 下载后用 Word / WPS 查看 |
-| `.doc` | `.doc` | Aspose.Words / Free Spire.Doc 可选 | 页眉 WordArt，3 列 × 4 行 | 下载后用 Word / WPS 查看 |
-| `.wps` | `.wps` | Aspose.Words / Free Spire.Doc 可选 | 页眉 WordArt，3 列 × 4 行 | 下载后用 WPS 查看 |
+| `.doc` | `.doc` | Aspose.Words / Free Spire.Doc / LibreOffice 可选 | 页眉文字形状，3 列 × 4 行 | 下载后用 Word / WPS 查看 |
+| `.wps` | `.wps` | Aspose.Words / Free Spire.Doc / LibreOffice 可选 | 页眉文字形状，3 列 × 4 行 | 下载后用 WPS 查看 |
 
 - **保持输入格式**：下载流程不转换为 PDF，也不通过修改后缀伪装格式。
 - **保留 MinIO 原件**：只在下载时处理副本，不将水印结果覆盖回存储桶。
@@ -28,6 +28,7 @@
 - Maven 3.6 或更高版本。
 - 可访问的 MinIO 服务，或本地 MinIO 可执行文件。
 - 首次构建需要访问 Maven 仓库，包括 e-iceblue 官方仓库。
+- 使用“LibreOffice 下载”时，处理节点需安装 LibreOffice Writer；Windows 默认路径为 `C:/Program Files/LibreOffice/program/soffice.com`。
 
 ```bash
 git clone https://github.com/yunko1993/watermark-demo.git
@@ -73,11 +74,13 @@ Windows 也可以运行 `powershell -ExecutionPolicy Bypass -File .\start.ps1`�
 打开 **[http://127.0.0.1:8088](http://127.0.0.1:8088)**：
 
 1. 选择 PDF / DOCX / DOC / WPS 原件，点击“上传到 MinIO”。首次上传会自动创建配置的存储桶。
-2. PDF 可以点击“预览水印版”或“下载水印版”；DOCX 点击“下载水印版”；DOC/WPS 分别点击“Aspose 下载”或“Spire 下载”进行对比。
+2. PDF 可以点击“预览水印版”或“下载水印版”；DOCX 点击“下载水印版”；DOC/WPS 可点击“Aspose 下载”“Spire 下载”或“LibreOffice 下载”进行对比。
 3. 用 Word / WPS 的打印布局打开下载文件，检查平铺水印与原文排版。
 4. 点击“对比原件”：PDF 在页面预览，Word 文件下载原件。
 
 同一份 MinIO 原件可以多次下载，日期会重新生成。若上传的文件本身已经带水印，当前实现会保留原有水印并追加新水印；验证时建议使用未加水印的原件。
+
+LibreOffice 路径每次需要完成 Word97 → DOCX → Word97 两段转换。当前实现为每次转换启动隔离的 Headless 进程，大文件通常需要十几秒；若用于高并发生产环境，应改为常驻 LibreOffice 进程池。
 
 ### 4. 打包运行
 
@@ -97,6 +100,8 @@ java -jar target/watermark-demo-0.0.1-SNAPSHOT.jar
 | `MINIO_ACCESS_KEY` | `minioadmin` | 应用访问账号 |
 | `MINIO_SECRET_KEY` | `minioadmin` | 应用访问密码 |
 | `MINIO_BUCKET` | `watermark-demo` | 原件存储桶 |
+| `LIBREOFFICE_EXECUTABLE` | `C:/Program Files/LibreOffice/program/soffice.com` | LibreOffice 命令行程序路径 |
+| `LIBREOFFICE_TIMEOUT_SECONDS` | `90` | 单次 LibreOffice 转换超时秒数 |
 
 也可在项目根目录创建 `application-local.properties`，该文件已被 Git 忽略：
 
@@ -105,6 +110,8 @@ minio.endpoint=http://127.0.0.1:9000
 minio.access-key=your-access-key
 minio.secret-key=your-secret-key
 minio.bucket=watermark-demo
+libreoffice.executable=C:/Program Files/LibreOffice/program/soffice.com
+libreoffice.timeout-seconds=90
 ```
 
 应用默认仅监听 `127.0.0.1`。需要局域网访问时，可使用启动参数 `--server.address=0.0.0.0`；当前 Demo 没有登录鉴权或对象访问授权，应在接入业务系统后由业务侧补齐。
@@ -135,6 +142,7 @@ Aspose 对比实现使用本地 `lib/aspose-words-24.01-jdk17-jie.jar`，该文�
 | DOCX | [`WordWatermarkUtil`](src/main/java/com/example/watermark/util/WordWatermarkUtil.java) | VML `#808080`，12% 不透明度，45°，3 × 4 |
 | DOC / WPS（Aspose） | [`AsposeLegacyWordWatermarkUtil`](src/main/java/com/example/watermark/util/AsposeLegacyWordWatermarkUtil.java) | 实色浅灰 `#F0F0F0`，45°，3 × 4 |
 | DOC / WPS（Spire） | [`LegacyWordWatermarkUtil`](src/main/java/com/example/watermark/util/LegacyWordWatermarkUtil.java) | 实色浅灰 `#F0F0F0`，45°，3 × 4 |
+| DOC / WPS（LibreOffice） | [`LibreOfficeLegacyWordWatermarkService`](src/main/java/com/example/watermark/service/LibreOfficeLegacyWordWatermarkService.java) | Word97 → DOCX → POI 透明平铺 PNG 页眉形状 → Word97 |
 
 DOC/WPS 的颜色由 `WATERMARK_COLOR` 常量控制：
 
@@ -155,6 +163,7 @@ DOCX 使用相对页面的绝对坐标放置形状；同时设置 `center` 与 m
 | `GET` | `/api/files/download?objectName=...` | 下载保持原格式的水印副本 |
 | `GET` | `/api/files/download/aspose?objectName=...` | DOC/WPS 使用 Aspose 添加水印 |
 | `GET` | `/api/files/download/spire?objectName=...` | DOC/WPS 使用 Free Spire.Doc 添加水印 |
+| `GET` | `/api/files/download/libreoffice?objectName=...` | DOC/WPS 使用 LibreOffice 桥接及 POI 添加水印 |
 | `GET` | 同上加 `original=true` | 获取原件 |
 | `GET` | 同上加 `preview=true` | PDF 内联预览；Word 仍按附件下载 |
 
@@ -187,7 +196,7 @@ curl -G http://127.0.0.1:8088/api/files/download \
 
 - 自动化测试覆盖 PDF 中文水印及旋转/裁剪页、DOCX 页眉继承与平铺坐标、DOC/WPS 内容校验和读写、MinIO 下载不回写原件。
 - 本地 WPS 12.1 已验证 DOCX 平铺；提供的 DOC 与 DOC 兼容 WPS 样本已完成水印生成、打开及人工查看。
-- Java 服务端使用文档库直接处理，无须安装 Office/WPS；本地办公软件只用于查看结果。
+- Aspose、Spire 路径由 Java 文档库直接处理；LibreOffice 路径要求服务端安装 LibreOffice，客户端仍只负责查看结果。
 - **银河麒麟 V3 尚未实机验证**。交付前需确认目标机 CPU 架构、JDK、字体及办公软件版本，并用实际业务文件验证页数、表格、图片、页眉页脚和换行。
 - Word 水印属于可编辑文档中的形状，可以被删除，不能作为不可删除的防篡改机制。
 - 宏文档、模板、其他办公格式不在当前支持范围；不要仅修改扩展名后上传。
@@ -209,6 +218,7 @@ mvn test
 | Apache POI | 5.4.1 | DOCX 水印及 OLE2 校验 |
 | Free Spire.Doc | 14.3.1 | DOC/WPS 读写与 WordArt |
 | Aspose.Words | 24.1，本地 JAR | DOC/WPS 对比处理与 WordArt |
+| LibreOffice | 26.8.0.3，本机程序 | DOC/WPS 与 DOCX 格式桥接 |
 | MinIO Java SDK | 8.2.2 | 原件存取 |
 
 **Free Spire.Doc 是受限免费、非开源组件**。官方说明免费版每个文档最多处理 **500 个段落、25 张表格**；超限或正式交付需要评估相应商业版本及授权。仓库不包含该 SDK 的 JAR，构建时通过官方 Maven 仓库获取。参见 [官方免费版说明](https://www.e-iceblue.com/Introduce/free-doc-for-java.html)。

@@ -72,6 +72,15 @@ public class FileController {
         return download(objectName, preview, original, "spire", "Spire");
     }
 
+    /** 使用 LibreOffice 格式桥接和 POI 页眉平铺图片为 DOC/WPS 添加水印。 */
+    @GetMapping("/files/download/libreoffice")
+    public ResponseEntity<byte[]> downloadWithLibreOffice(
+            @RequestParam String objectName,
+            @RequestParam(defaultValue = "false") boolean preview,
+            @RequestParam(defaultValue = "false") boolean original) throws Exception {
+        return download(objectName, preview, original, "libreoffice", "LibreOffice");
+    }
+
     private ResponseEntity<byte[]> download(String objectName, boolean preview, boolean original,
                                             String legacyEngine, String engineLabel) throws Exception {
         byte[] body = service.download(objectName, !original, legacyEngine);

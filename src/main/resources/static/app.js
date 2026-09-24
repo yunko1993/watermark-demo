@@ -43,7 +43,7 @@ $('uploadForm').addEventListener('submit', event => {
     $('viewer').hidden = true; $('viewer').removeAttribute('src'); $('empty').hidden = false;
     $('previewLabel').textContent = '等待预览新文件';
     if (previewUrl) { URL.revokeObjectURL(previewUrl); previewUrl = null; }
-    message(/\.(doc|wps)$/i.test(result.objectName) ? 'DOC/WPS 上传成功！可分别点击 Aspose 下载和 Spire 下载进行对比。' : /\.docx$/i.test(result.objectName) ? 'DOCX 上传成功！请下载后用 Word / WPS 查看。' : '上传成功！点击预览，对比原件和水印效果。');
+    message(/\.(doc|wps)$/i.test(result.objectName) ? 'DOC/WPS 上传成功！可使用 Aspose、Spire 或 LibreOffice 下载进行对比。' : /\.docx$/i.test(result.objectName) ? 'DOCX 上传成功！请下载后用 Word / WPS 查看。' : '上传成功！点击预览，对比原件和水印效果。');
     await refresh();
   });
 });
@@ -51,12 +51,16 @@ document.querySelectorAll('[data-action]').forEach(button => button.addEventList
   const objectName = $('objectName').value.trim();
   if (!objectName) throw new Error('请先上传文件或填写 MinIO 对象名');
   const action = button.dataset.action;
-  const engine = action === 'download-aspose' ? 'aspose' : action === 'download-spire' ? 'spire' : null;
+  const engine = action === 'download-aspose' ? 'aspose'
+    : action === 'download-spire' ? 'spire'
+      : action === 'download-libreoffice' ? 'libreoffice' : null;
   const isWord = /\.(docx?|wps)$/i.test(objectName);
   const isLegacyWord = /\.(doc|wps)$/i.test(objectName);
   if (isWord && action === "watermark") throw new Error("Word 文件暂不支持在线预览，请点击下载水印版，用 Word / WPS 查看");
-  if (engine && !isLegacyWord) throw new Error('Aspose / Spire 对比下载仅用于 DOC 和 WPS 文件');
-  const engineLabel = engine === 'aspose' ? 'Aspose' : engine === 'spire' ? 'Spire' : '';
+  if (engine && !isLegacyWord) throw new Error('Aspose / Spire / LibreOffice 对比下载仅用于 DOC 和 WPS 文件');
+  const engineLabel = engine === 'aspose' ? 'Aspose'
+    : engine === 'spire' ? 'Spire'
+      : engine === 'libreoffice' ? 'LibreOffice' : '';
   message(action === 'original' ? '正在读取原件…' : `正在使用${engineLabel ? ` ${engineLabel} ` : ''}生成当天水印…`);
   const params = new URLSearchParams({objectName, original: action === 'original', preview: action === 'watermark'});
   const endpoint = engine ? `/api/files/download/${engine}` : '/api/files/download';
